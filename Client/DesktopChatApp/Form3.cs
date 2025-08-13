@@ -37,7 +37,6 @@ namespace DesktopChatApp
             }
             dr.Close();
             con.Close();
-
             _connection = new HubConnectionBuilder()
                 .WithUrl("https://localhost:7034/chathub?username={_name}")
                 .WithAutomaticReconnect()
@@ -54,6 +53,34 @@ namespace DesktopChatApp
             });
         }
 
+        private void LoadAllChats(string sender, string receiver)
+        {
+            using (SqlConnection con = new SqlConnection(cs))
+            {
+                using (SqlCommand cmd = new SqlCommand("dbo.SP_Get_Messages", con))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@sender", sender);
+                    cmd.Parameters.AddWithValue("@receiver", receiver);
+
+                    using (SqlDataAdapter adapter = new SqlDataAdapter(cmd))
+                    {
+                        DataTable dt = new DataTable();
+                        adapter.Fill(dt);
+
+                        listBox1.Items.Clear();
+                        foreach (DataRow row in dt.Rows)
+                        {
+                            string user = row["sender"].ToString();
+                            string message = row["msg"].ToString();
+                            listBox1.Items.Add($"{user} : {message}");
+                        }
+                    }
+                }
+            }
+        }
+
+
         private async void Form3_Load(object sender, EventArgs e)
         {
             await _connection.StartAsync();
@@ -64,6 +91,8 @@ namespace DesktopChatApp
             {
                 comboBox1.SelectedIndex = 0;
             }
+
+            LoadAllChats(_name,comboBox1.SelectedItem.ToString());
         }
 
         private async void button1_Click(object sender, EventArgs e)
@@ -71,6 +100,16 @@ namespace DesktopChatApp
             if (!string.IsNullOrEmpty(textBox1.Text)) {
                 string receiver = comboBox1.SelectedItem.ToString();
                 await _connection.InvokeAsync("SendMessage", _name, receiver, textBox1.Text);
+
+                SqlConnection con = new SqlConnection(cs);
+                con.Open();
+                SqlCommand cmd = new SqlCommand("dbo.SP_Insert_Message", con);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@sender", _name);
+                cmd.Parameters.AddWithValue("@receiver", receiver);
+                cmd.Parameters.AddWithValue("@message", textBox1.Text);
+                cmd.ExecuteNonQuery();
+                con.Close();
                 textBox1.Clear();
             }
             
@@ -80,6 +119,7 @@ namespace DesktopChatApp
         {
             listBox1.Items.Clear();
             label3.Text = $"Chat with : {comboBox1.SelectedItem.ToString()}";
+            LoadAllChats(_name, comboBox1.SelectedItem.ToString());
         }
 
         private void label1_Click(object sender, EventArgs e)
