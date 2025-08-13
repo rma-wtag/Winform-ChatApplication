@@ -92,12 +92,13 @@ namespace DesktopChatApp
                 comboBox1.SelectedIndex = 0;
             }
 
-            LoadAllChats(_name,comboBox1.SelectedItem.ToString());
+            LoadAllChats(_name, comboBox1.SelectedItem.ToString());
         }
 
         private async void button1_Click(object sender, EventArgs e)
         {
-            if (!string.IsNullOrEmpty(textBox1.Text)) {
+            if (!string.IsNullOrEmpty(textBox1.Text))
+            {
                 string receiver = comboBox1.SelectedItem.ToString();
                 await _connection.InvokeAsync("SendMessage", _name, receiver, textBox1.Text);
 
@@ -112,7 +113,7 @@ namespace DesktopChatApp
                 con.Close();
                 textBox1.Clear();
             }
-            
+
         }
 
         private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
@@ -130,6 +131,11 @@ namespace DesktopChatApp
         private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
 
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            this.Close();
         }
     }
 }
